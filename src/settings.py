@@ -13,21 +13,22 @@ from dataset_tools.templates import (
 ##################################
 # * Before uploading to instance #
 ##################################
-PROJECT_NAME: str = "Epic Kitchens VISOR"
-PROJECT_NAME_FULL: str = "Epic Kitchens VISOR Dataset"
+PROJECT_NAME: str = "VISOR"
+PROJECT_NAME_FULL: str = "EPIC-KITCHENS VISOR: VIdeo Segmentations and Object Relations"
 HIDE_DATASET = True  # set False when 100% sure about repo quality
 
 ##################################
 # * After uploading to instance ##
 ##################################
-LICENSE: License = License.CC_BY_NC_4_0()
+LICENSE: License = License.Custom()
 APPLICATIONS: List[Union[Industry, Domain, Research]] = [Domain.General(), Industry.Food()]
-CATEGORY: Category = Category.General(extra=Category.Food())
+CATEGORY: Category = Category.General(extra=Category.Food(benchmark=True))
 
 CV_TASKS: List[CVTask] = [
     CVTask.SemanticSegmentation(),
     CVTask.ObjectDetection(),
     CVTask.Identification(),
+    CVTask.SemiSupervised(),
 ]
 ANNOTATION_TYPES: List[AnnotationType] = [AnnotationType.SemanticSegmentation()]
 
@@ -78,8 +79,8 @@ AUTHORS: Optional[List[str]] = [
 AUTHORS_CONTACTS: Optional[List[str]] = ["ru20956@bristol.ac.uk"]
 
 ORGANIZATION_NAME: Optional[Union[str, List[str]]] = [
-    "University of Bristol, United Kingdom",
-    "University of Michigan, United States",
+    "University of Bristol, UK",
+    "University of Michigan, USA",
     "University of Toronto, Canada",
 ]
 ORGANIZATION_URL: Optional[Union[str, List[str]]] = [
@@ -90,12 +91,11 @@ ORGANIZATION_URL: Optional[Union[str, List[str]]] = [
 
 # Set '__PRETEXT__' or '__POSTTEXT__' as a key with string value to add custom text. e.g. SLYTAGSPLIT = {'__POSTTEXT__':'some text}
 SLYTAGSPLIT: Optional[Dict[str, Union[List[str], str]]] = {
-    "video sequences": ["subsequence", "video"],
-    "__POSTTEXT__": "Additionally, labels marked with its ***instance***, ***exhaustively annotated*** and ***in contact*** tags. Explore it in Supervisely labelling tool",
+    "__POSTTEXT__": "Additionally, every image marked with its ***subsequence*** and ***video*** tags, Labels marked with its ***instance***, ***exhaustively annotated*** and ***in contact*** tags. Explore it in Supervisely labelling tool",
 }
 TAGS: Optional[
     List[Literal["multi-view", "synthetic", "simulation", "multi-camera", "multi-modal"]]
-] = None
+] = ["egocentric", "keypoints", "interaction-understanding", "long-term-reasoning"]
 
 
 SECTION_EXPLORE_CUSTOM_DATASETS: Optional[List[str]] = None

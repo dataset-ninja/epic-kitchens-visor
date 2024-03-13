@@ -1,6 +1,7 @@
 import csv
 import os
 import shutil
+from collections import defaultdict
 
 import supervisely as sly
 from dataset_tools.convert import unpack_if_archive
@@ -35,6 +36,12 @@ def convert_and_upload_supervisely_project(
         "/home/alex/DATASETS/TODO/2v6cgv1x04ol22qp9rm9x2j6a7/Interpolations-DenseAnnotations"
     )
 
+    ds_to_action_path = {
+        "train": "/home/alex/DATASETS/TODO/2v6cgv1x04ol22qp9rm9x2j6a7/epic-kitchens-100-annotations/EPIC_100_train.csv",
+        "val": "/home/alex/DATASETS/TODO/2v6cgv1x04ol22qp9rm9x2j6a7/epic-kitchens-100-annotations/EPIC_100_validation.csv",
+        "test": "/home/alex/DATASETS/TODO/2v6cgv1x04ol22qp9rm9x2j6a7/epic-kitchens-100-annotations/retrieval_annotations/EPIC_100_retrieval_test.csv",
+    }
+
     def create_ann(image_path):
         labels = []
         tags = []
@@ -51,12 +58,25 @@ def convert_and_upload_supervisely_project(
             return sly.Annotation(img_size=(img_height, img_wight), labels=labels, img_tags=tags)
 
         tags_data = im_name_to_tags[get_file_name_with_ext(image_path)]
-        sub_seq_val, video_val = tags_data
+        sub_seq_val, kitchen_video_val = tags_data
         sub_seq = sly.Tag(sequence_meta, value=sub_seq_val)
         tags.append(sub_seq)
 
+        frames_data = action_data[kitchen_video_val]
+        curr_frame = int(get_file_name(image_path).split("_frame_")[1])
+        for curr_frame_data in frames_data:
+            if curr_frame_data[0] <= curr_frame and curr_frame <= curr_frame_data[1]:
+                action_val = curr_frame_data[2]
+                action = sly.Tag(action_meta, value=action_val)
+                tags.append(action)
+
+        kitchen_val, video_val = kitchen_video_val.split("_")
+
         video = sly.Tag(video_meta, value=video_val)
         tags.append(video)
+
+        kitchen = sly.Tag(kitchen_meta, value=kitchen_val)
+        tags.append(kitchen)
 
         id_to_class_name = {}
         ann_data = im_name_to_anns[get_file_name_with_ext(image_path)]
@@ -76,6 +96,9 @@ def convert_and_upload_supervisely_project(
 
             obj_class_name = idx_to_class[curr_ann_data["class_id"]]
             obj_class = meta.get_obj_class(obj_class_name)
+            category_val = idx_to_category[curr_ann_data["class_id"]]
+            category = sly.Tag(category_meta, value=category_val)
+            l_tags.append(category)
 
             contact = curr_ann_data.get("in_contact_object")
             if contact is not None:
@@ -102,11 +125,13 @@ def convert_and_upload_supervisely_project(
         return sly.Annotation(img_size=(img_height, img_wight), labels=labels, img_tags=tags)
 
     idx_to_class = {}
+    idx_to_category = {}
     with open(classes_path, "r") as file:
         csvreader = csv.reader(file)
         for idx, row in enumerate(csvreader):
             if idx > 0:
                 idx_to_class[int(row[0])] = row[1]
+                idx_to_category[int(row[0])] = row[-1]
 
     obj_classes = [
         sly.ObjClass(name, sly.Polygon, color)
@@ -120,11 +145,23 @@ def convert_and_upload_supervisely_project(
     instance_meta = sly.TagMeta("instance", sly.TagValueType.ANY_STRING)
     contact_meta = sly.TagMeta("in contact", sly.TagValueType.ANY_STRING)
     exhaustively_meta = sly.TagMeta("exhaustively annotated", sly.TagValueType.NONE)
+    kitchen_meta = sly.TagMeta("kitchen", sly.TagValueType.ANY_STRING)
+    category_meta = sly.TagMeta("category", sly.TagValueType.ANY_STRING)
+    action_meta = sly.TagMeta("action", sly.TagValueType.ANY_STRING)
 
     project = api.project.create(workspace_id, project_name, change_name_if_conflict=True)
     meta = sly.ProjectMeta(
         obj_classes=obj_classes,
-        tag_metas=[sequence_meta, video_meta, instance_meta, contact_meta, exhaustively_meta],
+        tag_metas=[
+            sequence_meta,
+            video_meta,
+            instance_meta,
+            contact_meta,
+            exhaustively_meta,
+            kitchen_meta,
+            category_meta,
+            action_meta,
+        ],
     )
     api.project.update_meta(project.id, meta.to_json())
 
@@ -141,6 +178,15 @@ def convert_and_upload_supervisely_project(
                     for im_folder in os.listdir(subpath):
                         images_path = os.path.join(subpath, im_folder)
                         if dir_exists(images_path):
+                            action_path = ds_to_action_path[folder]
+                            action_data = defaultdict(list)
+                            with open(action_path, "r") as file:
+                                csvreader = csv.reader(file)
+                                for idx, row in enumerate(csvreader):
+                                    if idx > 0:
+                                        action_data[row[2]].append(
+                                            [int(row[6]), int(row[7]), row[8]]
+                                        )
                             if folder != "test":
                                 ann_json_path = os.path.join(
                                     anns_pathes, folder, im_folder + ".json"
@@ -154,9 +200,9 @@ def convert_and_upload_supervisely_project(
                                         curr_ann["image"]["subsequence"],
                                         curr_ann["image"]["video"],
                                     )
-                                inter_json_path = os.path.join(
-                                    interpolations_path, folder, im_folder + "_interpolations.json"
-                                )
+                                # inter_json_path = os.path.join(
+                                #     interpolations_path, folder, im_folder + "_interpolations.json"
+                                # )
 
                             images_names = os.listdir(images_path)
 
