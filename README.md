@@ -1,3 +1,3 @@
-# Epic Kitchens VISOR Dataset
+# EPIC-KITCHENS VISOR: VIdeo Segmentations and Object Relations
 
-Epic Kitchens VISOR is a dataset for semantic segmentation, object detection, and identification tasks.
+VISOR is a dataset for semantic segmentation, object detection, and identification tasks.
