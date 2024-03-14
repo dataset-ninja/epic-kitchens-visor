@@ -1,6 +1,6 @@
 Dataset **VISOR** can be downloaded in [Supervisely format](https://developer.supervisely.com/api-references/supervisely-annotation-json-format):
 
- [Download](Set 'HIDE_DATASET=False' to generate download link)
+ [Download](https://assets.supervisely.com/supervisely-supervisely-assets-public/teams_storage/x/w/mt/jVKOQ23jM0kRJ7fKuctrtQyrq0gaPPZcx1T8YQd4zk8rolbK4Qs4wEyHCjF0NPHExE7igi3Y05YbPqTdvzniIPCukUuREKzhdcIk3AkwQmyQ7KrOKsJ9tlRVl02Y.tar)
 
 As an alternative, it can be downloaded with *dataset-tools* package:
 ``` bash
